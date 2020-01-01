@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/hysios/todo/parser"
 	"github.com/imdario/mergo"
+	"github.com/jinzhu/copier"
 )
 
 type Formater interface {
@@ -36,10 +37,13 @@ const (
 
 type Color = color.Attribute
 
+type PrinterFunc func(node *parser.Todoitem, w io.Writer)
+
 type Printer struct {
 	Palette map[ItemType][]Color
 
 	todofile *parser.Todofile
+	pipes    []PrinterFunc
 }
 
 var defaultPalette = map[ItemType][]Color{
@@ -108,14 +112,21 @@ func tagClr(tagTyp parser.TagType) ItemType {
 	}
 }
 
-func shiftTag(tags []parser.Tag) (*parser.Tag, []parser.Tag) {
+func shiftTag(tags []parser.Tag, _opt *colorTagOption) (*parser.Tag, []parser.Tag) {
 	if len(tags) == 0 {
 		return nil, nil
 	}
 
-	tag := &tags[0]
+	var opt colorTagOption
+	if _opt != nil {
+		opt = *_opt
+	}
+
+	tag := tags[0]
 	tags = tags[1:]
-	return tag, tags
+	tag.Start += opt.Offset
+	tag.Stop += opt.Offset
+	return &tag, tags
 }
 
 func (print *Printer) defaultColor() *color.Color {
@@ -139,13 +150,24 @@ func (print *Printer) pickColor(typ ItemType) *color.Color {
 	return c
 }
 
-func (print *Printer) colorWithTags(text string, c *color.Color, tags []parser.Tag) string {
-	var full string
+type colorTagOption struct {
+	Offset int
+}
+
+func (print *Printer) colorWithTags(text string, c *color.Color, tags []parser.Tag, _opt *colorTagOption) string {
+	var (
+		full string
+		opt  colorTagOption
+	)
 	if len(tags) == 0 {
 		return c.Sprint(text)
 	}
 
-	tag, tags := shiftTag(tags)
+	if _opt != nil {
+		opt = *_opt
+	}
+
+	tag, tags := shiftTag(tags, &opt)
 
 	j, k := 0, 0
 	for i := 0; i < len(text); i++ {
@@ -163,13 +185,13 @@ func (print *Printer) colorWithTags(text string, c *color.Color, tags []parser.T
 
 			tc := print.pickColor(tagClr(tag.Type))
 			full += tc.Sprint(tag.Text)
-			tag, tags = shiftTag(tags)
+			tag, tags = shiftTag(tags, &opt)
 		} else if i < tag.Start { // ear tag
 			k = tag.Start
 			i = k
 			full += c.Sprint(text[j:k])
 		} else if i > tag.Stop { // after tag
-			tag, tags = shiftTag(tags) // pop tag
+			tag, tags = shiftTag(tags, &opt) // pop tag
 			j = i
 		}
 	}
@@ -181,21 +203,76 @@ func (print *Printer) Print() {
 	var sb strings.Builder
 
 	for _, child := range print.todofile.Items {
-		child.Printer(&sb, func(node *parser.Todoitem, w io.Writer) {
-			ctxt := print.pickColor(typeClr(node.Type))
-			cStat := print.pickColor(statuClr(node.Status))
-			if node.Status == parser.StDone || node.Status == parser.StCancel {
-				ctxt = cStat
-			}
-
-			if node.Type == parser.ItItem {
-				mainText := print.colorWithTags(node.Text, ctxt, node.Tags)
-				fmt.Fprintf(w, "%s%s %s\n", strings.Repeat(" ", node.Ident), cStat.Sprint(node.Token), mainText)
-			} else {
-				fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", node.Ident), ctxt.Sprint(node.Text))
-			}
-		})
+		print.printNodePipes(child, &sb)
 	}
 
 	fmt.Println(sb.String())
+}
+
+func (print *Printer) WriteTo(w io.Writer) {
+	for _, child := range print.todofile.Items {
+		print.printNodePipesWithoutColor(child, w)
+	}
+
+}
+
+func (print *Printer) print(node *parser.Todoitem, w io.Writer) {
+	if node.Type == parser.ItItem {
+		fmt.Fprintf(w, "%s%s %s\n", strings.Repeat(" ", node.Ident), node.Token, node.Text)
+	} else {
+		fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", node.Ident), node.Text)
+	}
+}
+
+func (print *Printer) printColour(node *parser.Todoitem, w io.Writer) {
+	ctxt := print.pickColor(typeClr(node.Type))
+	cStat := print.pickColor(statuClr(node.Status))
+	if node.Status == parser.StDone || node.Status == parser.StCancel {
+		ctxt = cStat
+	}
+
+	if node.Type == parser.ItItem {
+		mainText := print.colorWithTags(node.Text, ctxt, node.Tags, &colorTagOption{
+			Offset: node.Offset(),
+		})
+		fmt.Fprintf(w, "%s%s %s\n", strings.Repeat(" ", node.Ident), cStat.Sprint(node.Token), mainText)
+	} else {
+		fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", node.Ident), ctxt.Sprint(node.Text))
+	}
+}
+
+func (print *Printer) printNodePipes(node *parser.Todoitem, w io.Writer) {
+
+	node.Printer(w, func(node *parser.Todoitem, w io.Writer) {
+		var nnode parser.Todoitem
+		copier.Copy(&nnode, node)
+
+		for _, pipe := range print.pipes {
+			pipe(&nnode, w)
+		}
+
+		print.printColour(&nnode, w)
+	})
+}
+
+func (print *Printer) printNodePipesWithoutColor(node *parser.Todoitem, w io.Writer) {
+
+	node.Printer(w, func(node *parser.Todoitem, w io.Writer) {
+		var nnode parser.Todoitem
+		copier.Copy(&nnode, node)
+
+		for _, pipe := range print.pipes {
+			pipe(&nnode, w)
+		}
+
+		print.print(&nnode, w)
+	})
+}
+
+func (print *Printer) AddPipe(pipefunc PrinterFunc) {
+	if print.pipes == nil {
+		print.pipes = make([]PrinterFunc, 0)
+	}
+
+	print.pipes = append(print.pipes, pipefunc)
 }

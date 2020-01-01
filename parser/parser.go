@@ -72,6 +72,8 @@ type Todoitem struct {
 	Assignees   []Tag
 	Items       []*Todoitem
 	parent      *Todoitem
+
+	offset int
 }
 
 func (item ItemType) MarshalJSON() ([]byte, error) {
@@ -133,6 +135,14 @@ func (node *Todoitem) Printer(w io.Writer, printer func(node *Todoitem, w io.Wri
 	for _, child := range node.Items {
 		child.Printer(w, printer)
 	}
+}
+
+func (node *Todoitem) SetOffset(ofs int) {
+	node.offset = ofs
+}
+
+func (node *Todoitem) Offset() int {
+	return node.offset
 }
 
 func getParent(node *Todoitem, file *Todofile) *Todoitem {

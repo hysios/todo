@@ -1,41 +1,38 @@
 Projects:
-    ☐ Anything with a colon at the end of the line is a project
-    ☐ Projects will show some statistics next to them
-      ✔ By default those statistics are the number of pending todos and the sum of their time estimates @30m
+    ☐ 1. Anything with a colon at the end of the line is a project
+    ☐ 2. Projects will show some statistics next to them
+      ✔ 3. By default those statistics are the number of pending todos and the sum of their time estimates @30m
     Nested:
-      ☐ You can nest projects inside each other and fold them
-  
+      ☐ 4. You can nest projects inside each other and fold them
   Todos:
     You can write plain text notes/descriptions wherever you want
     New:
-      ☐ Press Cmd/Ctrl+Enter to add a new todo @@hysios
+      ☐ 5. Press Cmd/Ctrl+Enter to add a new todo @@hysios
     Done:
-      ✔ Press Alt+D to mark a todo as done
-      ✔ Press it again to undo the action
+      ✔ 6. Press Alt+D to mark a todo as done
+      ✔ 7. Press it again to undo the action
     Cancelled:
-      ✘ Press Alt+C to mark a todo as cancelled
-      ✘ Press it again to undo the action
+      ✘ 8. Press Alt+C to mark a todo as cancelled
+      ✘ 9. Press it again to undo the action
     Tagging:
-      ☐ You can add @tags using @C3 the @ symbol, like this @tag
-      ☐ There are some special, customizable tags: @critical @high @low @today
+      ☐ 10. You can add @tags using @C3 the @ symbol, like this @tag
+      ☐ 11. There are some special, customizable tags: @critical @high @low @today
     Timekeeping:
-      ✔ Completed todos can show a timestamp @done(17-11-03 10:42)
-      ☐ Press Alt+S to mark a todo as started @started(17-11-03 10:42)
-        ✔ Now it will show the elapsed time @started(17-11-03 10:42) @done(17-11-03 20:11) @lasted(9h29m)
-      ☐ You can provide time estimates for your todos @1h30m
-        ☐ We are even doing some natural language processing @est(1 day and 20 minutes)
-  
+      ✔ 12. Completed todos can show a timestamp @done(17-11-03 10:42)
+      ☐ 13. Press Alt+S to mark a todo as started @started(17-11-03 10:42)
+        ✔ 14. Now it will show the elapsed time @started(17-11-03 10:42) @done(17-11-03 20:11) @lasted(9h29m)
+      ☐ 15. You can provide time estimates for your todos @1h30m
+        ☐ 16. We are even doing some natural language processing @est(1 day and 20 minutes)
   Formatting:
     You can format text in a markdown-like fashion
     Bold:
-      ☐ Use asterisks for *bold*
+      ☐ 17. Use asterisks for *bold*
     Italic:
-      ☐ Use underscores for _italic_
+      ☐ 18. Use underscores for _italic_
     Strikethrough:
-      ☐ Use tildes for ~strikethrough~
+      ☐ 19. Use tildes for ~strikethrough~
     Code:
-      ☐ Use backticks for `code`
-  
+      ☐ 20. Use backticks for `code`
   Archive:
-    ✔ You can archive finished todos here
-    ✔ Congratulations, you are now a Todo+ master!
+    ✔ 21. You can archive finished todos here
+    ✔ 22. Congratulations, you are now a Todo+ master!

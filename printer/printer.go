@@ -33,6 +33,10 @@ const (
 	ClCustom2
 	ClCustom3
 	ClCustom4
+
+	ClBold
+	ClItalic
+	ClDeleted
 )
 
 type Color = color.Attribute
@@ -47,17 +51,21 @@ type Printer struct {
 }
 
 var defaultPalette = map[ItemType][]Color{
-	ClBase:    []Color{color.FgWhite},
-	ClItem:    []Color{color.FgWhite},
-	ClTitle:   []Color{color.FgCyan},
-	ClText:    []Color{color.Faint},
-	ClDone:    []Color{color.FgGreen},
-	ClCancel:  []Color{color.FgRed},
-	ClTag:     []Color{color.FgYellow},
-	ClCustom1: []Color{color.BgHiRed, color.FgBlack},
-	ClCustom2: []Color{color.BgHiCyan, color.FgBlack},
-	ClCustom3: []Color{color.BgYellow, color.FgBlack},
-	ClCustom4: []Color{color.BgMagenta, color.FgBlack},
+	ClBase:      []Color{color.FgWhite},
+	ClItem:      []Color{color.FgWhite},
+	ClTitle:     []Color{color.FgCyan},
+	ClText:      []Color{color.Faint},
+	ClDone:      []Color{color.FgGreen},
+	ClCancel:    []Color{color.FgRed},
+	ClTag:       []Color{color.FgYellow},
+	ClCustom1:   []Color{color.BgHiRed, color.FgBlack},
+	ClCustom2:   []Color{color.BgHiCyan, color.FgBlack},
+	ClCustom3:   []Color{color.BgYellow, color.FgBlack},
+	ClCustom4:   []Color{color.BgMagenta, color.FgBlack},
+	ClBold:      []Color{color.Bold},
+	ClItalic:    []Color{color.Italic},
+	ClDeleted:   []Color{color.CrossedOut},
+	ClHighlight: []Color{color.FgHiYellow},
 }
 
 func New(todofile *parser.Todofile) *Printer {
@@ -107,6 +115,14 @@ func tagClr(tagTyp parser.TagType) ItemType {
 		return ClCustom3
 	case parser.TagToday:
 		return ClCustom4
+	case parser.TagBold:
+		return ClBold
+	case parser.TagItalic:
+		return ClItalic
+	case parser.TagDeleted:
+		return ClDeleted
+	case parser.TagCode:
+		return ClHighlight
 	default:
 		return ClTag
 	}

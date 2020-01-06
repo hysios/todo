@@ -53,6 +53,12 @@ const (
 	TagHigh
 	TagLow
 	TagToday
+	TagBold
+	TagItalic
+	TagDeleted
+	TagCode
+
+	TagUnknown
 )
 
 type Tag struct {
@@ -315,11 +321,15 @@ Exit:
 	todo.Ident = idt
 	todo.Items = make([]*Todoitem, 0)
 	parseTag(todo.Text, &todo)
+	parseFormatText(todo.Text, &todo)
 
 	return idt, todo, nil
 }
 
-var reTag = regexp.MustCompile(`@[\w\p{L}\d]+(\([\w\d\s:-]+\)|\S)`)
+var (
+	reTag    = regexp.MustCompile(`@[\w\p{L}\d]+(\([\w\d\s:-]+\)|\S)`)
+	reFmtTxt = regexp.MustCompile("\\*.*?\\*|\\`.*?\\`|~.*?~|_.*?_")
+)
 
 func tagType(tag string) TagType {
 	if tag[0] == '@' {
@@ -367,7 +377,42 @@ func parseTag(text string, node *Todoitem) []Tag {
 		tags = append(tags, tag)
 	}
 
-	node.Tags = tags
+	node.Tags = append(node.Tags, tags...)
+	return tags
+}
+
+func formatTag(text string) TagType {
+	switch text[0] {
+	case '*':
+		return TagBold
+	case '_':
+		return TagItalic
+	case '~':
+		return TagDeleted
+	case '`':
+		return TagCode
+	}
+	return TagUnknown
+}
+func parseFormatText(text string, node *Todoitem) []Tag {
+	var tags = make([]Tag, 0)
+	idxs := reFmtTxt.FindAllStringIndex(text, -1)
+	if len(idxs) == 0 {
+		return nil
+	}
+
+	for _, idx := range idxs {
+		i0, i1 := idx[0], idx[1]
+		tag := Tag{
+			Start: i0,
+			Stop:  i1,
+			Type:  formatTag(text[i0:i1]),
+			Text:  text[i0:i1],
+		}
+		tags = append(tags, tag)
+	}
+
+	node.Tags = append(node.Tags, tags...)
 
 	return tags
 }
